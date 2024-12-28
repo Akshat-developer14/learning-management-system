@@ -1,5 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
 import mongoose, { Document, Schema, Model } from "mongoose";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -15,6 +19,8 @@ export interface UserInterface extends Document {
     isVerified: boolean;
     courses: Array<{ courseId: string }>;
     comparePassword: (password: string) => Promise<boolean>;
+    SignAccessToken: () => string;
+    SignRefreshToken: () => string;
 }
 
 const userSchema: Schema<UserInterface> = new mongoose.Schema({
@@ -35,7 +41,6 @@ const userSchema: Schema<UserInterface> = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "Please enter your password"],
         minlength: [6, "Password must be at least 6 characters"],
         select: false
     },
@@ -66,6 +71,21 @@ userSchema.pre<UserInterface>("save", async function (next) {
     this.password = await bcrypt.hash(this.password, 10);
     next();
 })
+
+//Sign access token 
+userSchema.methods.SignAccessToken = function () {
+    return jwt.sign({ id: this._id }, process.env.ACCESS_TOKEN ?? "", {
+        expiresIn: "5m"
+    });
+}
+
+//Sign Refresh token
+userSchema.methods.SignRefreshToken = function () {
+    return jwt.sign({ id: this._id }, process.env.REFRESH_TOKEN ?? "", {
+        expiresIn: "3d"
+    });
+}
+
 
 //compare password
 userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
