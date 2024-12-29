@@ -24,8 +24,7 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
         req.user = JSON.parse(user);
         next();
     } catch (error) {
-        console.log("reached inside isAuthenticated catch block")
-        return next(new ErrorHandler("Access token is not valid", 400));
+        return next(new ErrorHandler("Access token expired", 400));
     }
 };
 
