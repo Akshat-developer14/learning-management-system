@@ -265,12 +265,12 @@ export const AddReview = CatchAsyncError(async (req: Request, res: Response, nex
 
         const courseExists = userCourseList?.some((course: any) => course._id.toString() === courseId);
 
-        if(!courseExists){
+        if (!courseExists) {
             return next(new ErrorHandler("You are not eligible to access this course", 404));
         }
         const course = await CourseModel.findById(courseId);
 
-        const {review, rating} = req.body as AddReviewInterface;
+        const { review, rating } = req.body as AddReviewInterface;
 
         const reviewData: any = {
             user: req.user,
@@ -280,13 +280,13 @@ export const AddReview = CatchAsyncError(async (req: Request, res: Response, nex
 
         course?.reviews.push(reviewData);
 
-        let avg= 0;
+        let avg = 0;
 
         course?.reviews.forEach((rev: any) => {
             avg += rev.rating;
         })
 
-        if(course){
+        if (course) {
             course.ratings = avg / course.reviews.length;
         }
 
@@ -318,16 +318,16 @@ interface AddReplyInterface {
 }
 export const AddReplyToReview = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const {comment, courseId, reviewId} = req.body as AddReplyInterface;
+        const { comment, courseId, reviewId } = req.body as AddReplyInterface;
 
         const course = await CourseModel.findById(courseId);
 
-        if(!course){
+        if (!course) {
             return next(new ErrorHandler("Course not found", 404));
         }
         const review = course?.reviews.find((rev: any) => rev._id.toString() === reviewId);
 
-        if(!review){
+        if (!review) {
             return next(new ErrorHandler("Review not found", 404));
         }
 
@@ -335,7 +335,7 @@ export const AddReplyToReview = CatchAsyncError(async (req: Request, res: Respon
             user: req.user,
             comment
         }
-        if(!review.commentReplies){
+        if (!review.commentReplies) {
             review.commentReplies = [];
         }
         review.commentReplies?.push(replyData);
@@ -349,4 +349,4 @@ export const AddReplyToReview = CatchAsyncError(async (req: Request, res: Respon
     } catch (error: any) {
         return new ErrorHandler(error.message, 500)
     }
-    })
+})

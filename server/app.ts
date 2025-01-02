@@ -5,6 +5,7 @@ import express ,{ Request, Response, NextFunction } from "express";
 import { ErrorMiddleware } from "./middlewares/error";
 import userRouter from "./routes/user.route";
 import courseRouter from "./routes/course.route";
+import orderRouter from "./routes/order.route";
 
 dotenv.config();
 
@@ -26,6 +27,8 @@ app.use(cookieParser());
 app.use("/api/v1", userRouter);
 // course router
 app.use("/api/v1", courseRouter);
+// order router
+app.use("/api/v1", orderRouter)
 
 // routes
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
