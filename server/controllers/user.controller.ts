@@ -8,7 +8,7 @@ import path from "path";
 import sendMail from "../utils/sendMail";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
-import { getUserById } from "../services/user.service";
+import { getAllUsersService, getUserById } from "../services/user.service";
 import cloudinary from "cloudinary";
 
 // Register user
@@ -151,7 +151,10 @@ export const logoutUser = CatchAsyncError(async (req: Request, res: Response, ne
     try {
         res.cookie("access_token", "", { maxAge: 1 });
         res.cookie("refresh_token", "", { maxAge: 1 });
-        const userId = req.user?._id as string || "";
+        if(!req.user){
+            return next(new ErrorHandler("User not found", 400))
+        }
+        const userId = req.user?._id.toString();
         redis.del(userId);
         res.status(200).json({
             success: true,
@@ -203,7 +206,10 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
 // get user Info
 export const getUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.user?._id as string || "";
+        if(!req.user){
+            return next(new ErrorHandler("User not found", 400))
+        }
+        const userId: string = req.user?._id.toString();
         await getUserById(userId, res);
     } catch (error) {
         return next(new ErrorHandler("Error", 400))
@@ -238,7 +244,7 @@ interface UpdateUserInfoInterface {
 export const updateUserInfo = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email } = req.body as UpdateUserInfoInterface;
-        const userId = req.user?._id as string || "";
+        const userId = req.user?._id.toString();
         const user = await userModel.findById(userId);
 
         if (email && user) {
@@ -253,7 +259,7 @@ export const updateUserInfo = CatchAsyncError(async (req: Request, res: Response
         }
         await user?.save();
 
-        await redis.set(userId, JSON.stringify(user));
+        await redis.set(userId as string, JSON.stringify(user));
 
         res.status(201).json({
             success: true,
@@ -294,7 +300,9 @@ export const updatePassword = CatchAsyncError(async (req: Request, res: Response
 
         await user.save();
 
-        await redis.set(req.user?._id as string, JSON.stringify(user));
+        const userId = req.user?._id.toString();
+
+        await redis.set(userId as string, JSON.stringify(user));
 
         res.json({
             success: true,
@@ -314,7 +322,7 @@ export const updateProfilePicture = CatchAsyncError(async (req: Request, res: Re
     try {
         const { avatar } = req.body as UpdateAvatarInterface;
 
-        const userId = req.user?._id;
+        const userId = req.user?._id.toString();
 
         const user = await userModel.findById(userId);
 
@@ -324,7 +332,7 @@ export const updateProfilePicture = CatchAsyncError(async (req: Request, res: Re
             if (user?.avatar?.public_id) {
                 // first delete the old image
                 await cloudinary.v2.uploader.destroy(user?.avatar?.public_id);
-            
+
                 const myCloud = await cloudinary.v2.uploader.upload(avatar, {
                     folder: "avatars",
                     width: 150,
@@ -345,7 +353,7 @@ export const updateProfilePicture = CatchAsyncError(async (req: Request, res: Re
                     url: myCloud.secure_url
                 }
             }
-        
+
             await user.save();
 
             await redis.set(userId as string, JSON.stringify(user));
@@ -360,3 +368,13 @@ export const updateProfilePicture = CatchAsyncError(async (req: Request, res: Re
         return next(new ErrorHandler(error.message, 400))
     }
 })
+
+// get all users --only for admin
+export const getAllUsers = CatchAsyncError(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            await getAllUsersService(res);
+        } catch (error: any) {
+            return next(new ErrorHandler(error.message, 400))
+        }
+    })
