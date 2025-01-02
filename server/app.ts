@@ -6,6 +6,7 @@ import { ErrorMiddleware } from "./middlewares/error";
 import userRouter from "./routes/user.route";
 import courseRouter from "./routes/course.route";
 import orderRouter from "./routes/order.route";
+import notificationRoute from "./routes/notification.route";
 
 dotenv.config();
 
@@ -29,6 +30,8 @@ app.use("/api/v1", userRouter);
 app.use("/api/v1", courseRouter);
 // order router
 app.use("/api/v1", orderRouter)
+// notification router
+app.use("/api/v1", notificationRoute)
 
 // routes
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {

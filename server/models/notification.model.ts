@@ -3,7 +3,7 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 export interface NotificationInterface extends Document {
     title: string;
     message: string;
-    status: object;
+    status: string;
     user: string;
 }
 const NotificationSchema = new Schema<NotificationInterface> ({
