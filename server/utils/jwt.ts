@@ -36,10 +36,10 @@ export const sendToken = (user: UserInterface, statusCode: number, res: Response
     const refreshToken = user.SignRefreshToken();
 
     // Assert the type of user._id as a string 
-    const userId = user._id as string;
+    const userId = user._id.toString();
 
     //upload session to redis 
-    redis.set(userId, JSON.stringify(user) as any);
+    redis.set(userId, JSON.stringify(user) as any, "EX", 604800 );//604800 in seconds --7 days
 
     // only set secure to true in production
     if (process.env.NODE_ENV === "production") {

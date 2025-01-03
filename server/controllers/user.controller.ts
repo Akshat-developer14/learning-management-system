@@ -146,6 +146,7 @@ export const loginUser = CatchAsyncError(async (req: Request, res: Response, nex
         return next(new ErrorHandler(error.message, 400))
     }
 })
+
 //logout user
 export const logoutUser = CatchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -178,7 +179,7 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
         const session = await redis.get(decoded.id as string);
 
         if (!session) {
-            return next(new ErrorHandler(message, 400))
+            return next(new ErrorHandler("Please login again to access this resource", 400))
         }
         const user = JSON.parse(session);
         const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, {
@@ -189,8 +190,12 @@ export const updateAccessToken = CatchAsyncError(async (req: Request, res: Respo
         });
 
         req.user = user;
+
         res.cookie("access_token", accessToken, accessTokenOptions);
         res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+        await redis.set(user._id, JSON.stringify(user), "EX", 604800 );//604800 in seconds --7 days
+
 
         res.status(200).json({
             status: "success",
